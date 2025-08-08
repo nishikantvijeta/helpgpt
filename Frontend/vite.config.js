@@ -15,7 +15,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: Number(process.env.PORT) || 5173,
-    strictPort: true
+    strictPort: true,
+    allowedHosts: [
+      '.onrender.com',  // e.g., helpgpt.onrender.com
+      '.vercel.app',    // e.g., helpgpt2.vercel.app
+    ],
   }
 })
 
