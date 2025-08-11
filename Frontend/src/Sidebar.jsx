@@ -44,7 +44,7 @@ function Sidebar() {
     const changeThread = async (newThreadId) => {
         setCurrThreadId(newThreadId);
         try {
-            const response = await fetch(https://helpgpt-backened.onrender.com/api/thread/${newThreadId}, {
+            const response = await fetch(`https://helpgpt-backened.onrender.com/api/thread/${newThreadId}`, {
                 headers: {
                     "Content-Type": "application/json",
                     ...(token ? { "Authorization":` Bearer ${token}` } : {})
@@ -61,11 +61,11 @@ function Sidebar() {
 
     const deleteThread = async (threadId) => {
         try {
-            const response = await fetch(https://helpgpt-backened.onrender.com/api/thread/${threadId}, {
+            const response = await fetch(`https://helpgpt-backened.onrender.com/api/thread/${threadId}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": Bearer ${token} } : {})
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
                 }
             });
             await response.json();
