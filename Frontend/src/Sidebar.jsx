@@ -1,4 +1,5 @@
-import React, { useContext, useEffect } from "react";
+import React from "react";
+import { useContext, useEffect } from "react";
 import { MyContext } from "./MyContext.jsx";
 import { v1 as uuidv1 } from "uuid";
 
@@ -8,15 +9,12 @@ function Sidebar() {
         setReply, setCurrThreadId, setPrevChats, token
     } = useContext(MyContext);
 
-    // Fetch all threads from backend only if logged in
     const getAllThreads = async () => {
-        if (!token) return;  // <-- Added: skip fetch if guest
-
         try {
             const response = await fetch("https://helpgpt-backened.onrender.com/api/thread", {
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                    ...(token ? { "Authorization": Bearer ${token} } : {})
                 }
             });
             const res = await response.json();
@@ -33,7 +31,7 @@ function Sidebar() {
 
     useEffect(() => {
         getAllThreads();
-    }, [currThreadId, token]); // <-- Added token to dependency to reload on login/logout
+    }, [currThreadId]);
 
     const createNewChat = () => {
         setNewChat(true);
@@ -43,22 +41,13 @@ function Sidebar() {
         setPrevChats([]);
     };
 
-    // When a thread is clicked, fetch chat history if logged in
     const changeThread = async (newThreadId) => {
         setCurrThreadId(newThreadId);
-        if (!token) {
-            // Guests do not have threads stored in backend; maybe clear chats or ignore
-            setPrevChats([]);
-            setReply(null);
-            setNewChat(true);
-            return;
-        }
-
         try {
             const response = await fetch(`https://helpgpt-backened.onrender.com/api/thread/${newThreadId}`, {
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                    ...(token ? { "Authorization": Bearer ${token} } : {})
                 }
             });
             const res = await response.json();
@@ -70,16 +59,13 @@ function Sidebar() {
         }
     };
 
-    // Delete thread only if logged in (guests have no backend threads)
     const deleteThread = async (threadId) => {
-        if (!token) return; // <-- Added: guests cannot delete backend threads
-
         try {
             const response = await fetch(`https://helpgpt-backened.onrender.com/api/thread/${threadId}`, {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                    ...(token ? { "Authorization": Bearer ${token} } : {})
                 }
             });
             await response.json();
@@ -105,8 +91,7 @@ function Sidebar() {
                 <span className="font-semibold">New Chat</span>
             </button>
             <ul className="flex-1 overflow-y-auto px-2">
-                {/* Show threads only for logged-in users */}
-                {token && allThreads?.map((thread, idx) => (
+                {allThreads?.map((thread, idx) => (
                     <li
                         key={idx}
                         onClick={() => changeThread(thread.threadId)}
