@@ -1,4 +1,4 @@
- import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import Chat from "./Chat.jsx";
 import { MyContext } from "./MyContext.jsx";
 import Login from "./Login.jsx";
@@ -18,7 +18,7 @@ function ChatWindow() {
 
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [guestHistory, setGuestHistory] = useState([]); // optional, won't be used for guest chat now
+  const [guestHistory, setGuestHistory] = useState([]);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [recording, setRecording] = useState(false);
   const [speakingIndex, setSpeakingIndex] = useState(null);
@@ -61,59 +61,65 @@ function ChatWindow() {
     }
   };
 
-  // Fetch reply
+  // Fetch reply - allow guest chatting without saving history
   const getReply = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
     setNewChat(false);
 
-    if (token) {
-      const options = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ message: prompt, threadId: currThreadId })
-      };
+    const options = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ message: prompt, threadId: currThreadId })
+    };
 
-      try {
-        const response = await fetch("https://helpgpt-backened.onrender.com/api/chat", options);
-        const res = await response.json();
-        setReply(res.reply);
+    try {
+      const response = await fetch("https://helpgpt-backened.onrender.com/api/chat", options);
+      const res = await response.json();
 
-        const newMessages = [
-          { role: "user", content: prompt },
-          { role: "assistant", content: res.reply }
-        ];
+      setReply(res.reply);
+
+      const newMessages = [
+        { role: "user", content: prompt },
+        { role: "assistant", content: res.reply }
+      ];
+
+      if (token) {
+        // Logged-in user: save chat history
         setPrevChats(prev => [...prev, ...newMessages]);
-      } catch (err) {
-        console.error("Error fetching reply:", err);
+      } else {
+        // Guest user: save locally only
+        setGuestHistory(prev => [...prev, ...newMessages]);
       }
-    } else {
-      // Guest: no backend call, show login prompt
-      setReply("Please log in to chat and save your history.");
+    } catch (err) {
+      console.error("Error fetching reply:", err);
     }
 
     setLoading(false);
   };
 
-  // Lifecycle setup
+  // Reset prompt on reply change
   useEffect(() => {
     setPrompt("");
   }, [reply]);
 
+  // Load token from localStorage on mount
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     if (savedToken && !token) setToken(savedToken);
   }, [token]);
 
+  // Reset chats on token change
   useEffect(() => {
     setPrevChats([]);
     setGuestHistory([]);
     setReply("");
   }, [token]);
 
+  // Fetch user threads if logged in
   useEffect(() => {
     if (token) {
       fetch("https://helpgpt-backened.onrender.com/api/thread", {
@@ -136,7 +142,7 @@ function ChatWindow() {
 
   return (
     <div className="bg-neutral-900 h-screen w-full flex flex-col justify-between items-center text-center">
-      
+
       {/* Navbar */}
       <div className="w-full flex justify-between items-center px-4 py-3 border-b border-gray-700">
         <span className="text-white font-bold text-xl">
@@ -197,20 +203,18 @@ function ChatWindow() {
         <div className="relative max-w-3xl mx-auto flex items-center bg-neutral-800 rounded-md px-4 py-2">
           <input
             className="flex-1 border-none outline-none bg-transparent text-white text-base"
-            placeholder={token ? "Ask anything" : "Log in to chat"}
+            placeholder="Ask anything"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && token) getReply();
-            }}
-            disabled={!token}
+            onKeyDown={(e) => e.key === "Enter" && getReply()}
+            // input always enabled so guest can chat
           />
 
           <div className="flex items-center gap-3 text-gray-400 text-lg">
             <div
-              onClick={() => { if(token) getReply(); }}
-              className={`cursor-pointer hover:text-white hover:scale-110 transition w-10 h-10 flex items-center justify-center ${!token ? "opacity-50 cursor-not-allowed" : ""}`}
-              title={token ? "Send message" : "Log in to send message"}
+              onClick={getReply}
+              className="cursor-pointer hover:text-white hover:scale-110 transition w-10 h-10 flex items-center justify-center"
+              title="Send message"
             >
               <i className="fa-solid fa-paper-plane"></i>
             </div>
@@ -225,7 +229,7 @@ function ChatWindow() {
         </div>
         {!token && (
           <p className="text-yellow-400 text-sm mt-1 text-center">
-            Please log in to chat and save your history.
+            You are chatting as a guest. Login to save your chat history.
           </p>
         )}
         <p className="text-sm text-gray-400 mt-2 text-center">
@@ -237,3 +241,4 @@ function ChatWindow() {
 }
 
 export default ChatWindow;
+
