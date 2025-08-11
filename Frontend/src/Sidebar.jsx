@@ -8,11 +8,78 @@ function Sidebar() {
     setReply, setCurrThreadId, setPrevChats, token
   } = useContext(MyContext);
 
-  const [isCollapsed, setIsCollapsed] = useState(false);  // sidebar collapsed state
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // ... your existing getAllThreads, createNewChat, changeThread, deleteThread methods here
+  const getAllThreads = async () => {
+    try {
+      const response = await fetch("https://helpgpt-backened.onrender.com/api/thread", {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+      const res = await response.json();
+      const threads = Array.isArray(res) ? res : res.threads || [];
+      const filteredData = threads.map(thread => ({
+        threadId: thread.threadId,
+        title: thread.title
+      }));
+      setAllThreads(filteredData);
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
-  // Toggle sidebar open/close
+  useEffect(() => {
+    getAllThreads();
+  }, [currThreadId]);
+
+  // Define createNewChat function here
+  const createNewChat = () => {
+    setNewChat(true);
+    setPrompt("");
+    setReply(null);
+    setCurrThreadId(uuidv1());
+    setPrevChats([]);
+  };
+
+  const changeThread = async (newThreadId) => {
+    setCurrThreadId(newThreadId);
+    try {
+      const response = await fetch(`https://helpgpt-backened.onrender.com/api/thread/${newThreadId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+      const res = await response.json();
+      setPrevChats(res);
+      setNewChat(false);
+      setReply(null);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const deleteThread = async (threadId) => {
+    try {
+      const response = await fetch(`https://helpgpt-backened.onrender.com/api/thread/${threadId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        }
+      });
+      await response.json();
+      setAllThreads(prev => prev.filter(thread => thread.threadId !== threadId));
+      if (threadId === currThreadId) {
+        createNewChat();
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
   };
@@ -78,5 +145,6 @@ function Sidebar() {
 }
 
 export default Sidebar;
+
 
 
