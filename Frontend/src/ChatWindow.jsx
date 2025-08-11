@@ -142,8 +142,8 @@ function ChatWindow() {
         <span className="text-white font-bold text-xl">
           HelpGPT <i className="fa-solid fa-chevron-down ml-2 text-sm"></i>
         </span>
-        <div className="text-gray-400 font-semibold">
-          {user ? `Hi, ${user}` : "Welcome, Guest"}
+        <div className="text-red-400 font-semibold">
+          {user ? `Hi, ${user}` : " Welcome,Guest! Login for personalised history"}
         </div>
         <div className="cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
           <span className="bg-blue-500 h-8 w-8 rounded-full flex items-center justify-center text-white">
