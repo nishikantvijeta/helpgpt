@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+   import React, { useContext, useEffect, useRef, useState } from "react";
 import Chat from "./Chat.jsx";
 import { MyContext } from "./MyContext.jsx";
 import Login from "./Login.jsx";
@@ -18,27 +18,13 @@ function ChatWindow() {
 
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
- // const [guestHistory, setGuestHistory] = useState([]);
-  const [guestHistory, setGuestHistory] = useState(() => {
-    // <-- Added: Load guest history from localStorage on init
-    const saved = localStorage.getItem("guestHistory");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [guestHistory, setGuestHistory] = useState([]);
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [recording, setRecording] = useState(false);
   const [speakingIndex, setSpeakingIndex] = useState(null);
 
   const recognitionRef = useRef(null);
-  //added
- useEffect(() => {
-    if (!token) {
-      let guestId = localStorage.getItem("guestId");
-      if (!guestId) {
-        guestId = uuidv4();
-        localStorage.setItem("guestId", guestId);
-      }
-    }
-  }, [token]);
+
   // Text-to-speech
   const speak = (text, idx) => {
     if (!audioEnabled || !window.speechSynthesis) return;
@@ -103,12 +89,7 @@ function ChatWindow() {
       if (token) {
         setPrevChats(prev => [...prev, ...newMessages]);
       } else {
-        //setGuestHistory(prev => [...prev, ...newMessages]);
-         setGuestHistory(prev => {
-          const updated = [...prev, ...newMessages];
-          localStorage.setItem("guestHistory", JSON.stringify(updated));
-          return updated;
-        });
+        setGuestHistory(prev => [...prev, ...newMessages]);
       }
     } catch (err) {
       console.error("Error fetching reply:", err);
@@ -127,24 +108,15 @@ function ChatWindow() {
     if (savedToken && !token) setToken(savedToken);
   }, [token]);
 
-  // useEffect(() => {
-  //   setPrevChats([]);
-  //   setGuestHistory([]);
-  //   setReply("");
-  // }, [token]);
-  //aded
- useEffect(() => {
-    if (token) {
-      setPrevChats([]);
-      setReply("");
-    } else {
-      setGuestHistory([]);
-      setReply("");
-    }
+  useEffect(() => {
+    setPrevChats([]);
+    setGuestHistory([]);
+    setReply("");
   }, [token]);
+
   useEffect(() => {
     if (token) {
-      fetch("https://helpgpt-backened.onrender.com/api/thread", {
+      fetch("http://localhost:8080/api/thread", {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -254,4 +226,4 @@ function ChatWindow() {
   );
 }
 
-export default ChatWindow;
+export default ChatWindow;     
