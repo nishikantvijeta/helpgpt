@@ -1,4 +1,4 @@
-   import React, { useContext, useEffect, useRef, useState } from "react";
+ import React, { useContext, useEffect, useRef, useState } from "react";
 import Chat from "./Chat.jsx";
 import { MyContext } from "./MyContext.jsx";
 import Login from "./Login.jsx";
@@ -18,7 +18,7 @@ function ChatWindow() {
 
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const [guestHistory, setGuestHistory] = useState([]);
+  const [guestHistory, setGuestHistory] = useState([]); // optional, won't be used for guest chat now
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [recording, setRecording] = useState(false);
   const [speakingIndex, setSpeakingIndex] = useState(null);
@@ -67,32 +67,32 @@ function ChatWindow() {
     setLoading(true);
     setNewChat(false);
 
-    const options = {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      },
-      body: JSON.stringify({ message: prompt, threadId: currThreadId })
-    };
+    if (token) {
+      const options = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: prompt, threadId: currThreadId })
+      };
 
-    try {
-      const response = await fetch("https://helpgpt-backened.onrender.com/api/chat", options);
-      const res = await response.json();
-      setReply(res.reply);
+      try {
+        const response = await fetch("https://helpgpt-backened.onrender.com/api/chat", options);
+        const res = await response.json();
+        setReply(res.reply);
 
-      const newMessages = [
-        { role: "user", content: prompt },
-        { role: "assistant", content: res.reply }
-      ];
-
-      if (token) {
+        const newMessages = [
+          { role: "user", content: prompt },
+          { role: "assistant", content: res.reply }
+        ];
         setPrevChats(prev => [...prev, ...newMessages]);
-      } else {
-        setGuestHistory(prev => [...prev, ...newMessages]);
+      } catch (err) {
+        console.error("Error fetching reply:", err);
       }
-    } catch (err) {
-      console.error("Error fetching reply:", err);
+    } else {
+      // Guest: no backend call, show login prompt
+      setReply("Please log in to chat and save your history.");
     }
 
     setLoading(false);
@@ -143,7 +143,7 @@ function ChatWindow() {
           HelpGPT <i className="fa-solid fa-chevron-down ml-2 text-sm"></i>
         </span>
         <div className="text-red-400 font-semibold">
-          {user ? `Hi, ${user}` : " Welcome,Guest! Login for personalised history"}
+          {user ? `Hi, ${user}` : " Welcome, Guest! Login for personalised history"}
         </div>
         <div className="cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
           <span className="bg-blue-500 h-8 w-8 rounded-full flex items-center justify-center text-white">
@@ -197,27 +197,37 @@ function ChatWindow() {
         <div className="relative max-w-3xl mx-auto flex items-center bg-neutral-800 rounded-md px-4 py-2">
           <input
             className="flex-1 border-none outline-none bg-transparent text-white text-base"
-            placeholder="Ask anything"
+            placeholder={token ? "Ask anything" : "Log in to chat"}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && getReply()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && token) getReply();
+            }}
+            disabled={!token}
           />
 
           <div className="flex items-center gap-3 text-gray-400 text-lg">
             <div
-              onClick={getReply}
-              className="cursor-pointer hover:text-white hover:scale-110 transition w-10 h-10 flex items-center justify-center"
+              onClick={() => { if(token) getReply(); }}
+              className={`cursor-pointer hover:text-white hover:scale-110 transition w-10 h-10 flex items-center justify-center ${!token ? "opacity-50 cursor-not-allowed" : ""}`}
+              title={token ? "Send message" : "Log in to send message"}
             >
               <i className="fa-solid fa-paper-plane"></i>
             </div>
             <div
               onClick={startVoiceInput}
               className="cursor-pointer hover:text-white hover:scale-110 transition w-10 h-10 flex items-center justify-center"
+              title="Voice input"
             >
               <i className={`fa-solid fa-microphone${recording ? '-slash' : ''}`}></i>
             </div>
           </div>
         </div>
+        {!token && (
+          <p className="text-yellow-400 text-sm mt-1 text-center">
+            Please log in to chat and save your history.
+          </p>
+        )}
         <p className="text-sm text-gray-400 mt-2 text-center">
           HelpGPT can make mistakes. Check important info. See Cookie Preferences.
         </p>
@@ -226,4 +236,4 @@ function ChatWindow() {
   );
 }
 
-export default ChatWindow;     
+export default ChatWindow;
