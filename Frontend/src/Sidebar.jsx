@@ -14,7 +14,7 @@ function Sidebar() {
             const response = await fetch("https://helpgpt-backened.onrender.com/api/thread", {
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": Bearer ${token} } : {})
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
                 }
             });
             const res = await response.json();
@@ -47,7 +47,7 @@ function Sidebar() {
             const response = await fetch(`https://helpgpt-backened.onrender.com/api/thread/${newThreadId}`, {
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": Bearer ${token} } : {})
+                    ...(token ? { "Authorization":` Bearer ${token}` } : {})
                 }
             });
             const res = await response.json();
@@ -65,7 +65,7 @@ function Sidebar() {
                 method: "DELETE",
                 headers: {
                     "Content-Type": "application/json",
-                    ...(token ? { "Authorization": Bearer ${token} } : {})
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
                 }
             });
             await response.json();
