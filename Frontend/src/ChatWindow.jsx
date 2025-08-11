@@ -116,7 +116,7 @@ function ChatWindow() {
 
   useEffect(() => {
     if (token) {
-      fetch("http://localhost:8080/api/thread", {
+      fetch("https://helpgpt-backened.onrender.com/api/thread", {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())
